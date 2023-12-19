@@ -1,8 +1,16 @@
-FROM nvidia/cuda:11.1-base-ubuntu20.04
+# 如果报错需要更新版本 https://hub.docker.com/r/nvidia/cuda
+# FROM nvidia/cuda:12.3.1-base-ubuntu20.04
+FROM python:3.10-slim
 
+# RUN apt-get update && apt-get install -y python3 python3-pip
+# 准备ubuntu环境
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev -yq
+
+# 将代码复制到容器中
 ADD . /app
 WORKDIR /app
+
+# 准备模型
 RUN cd Face_Enhancement/models/networks/ &&\
   git clone https://github.com/vacancy/Synchronized-BatchNorm-PyTorch &&\
   cp -rf Synchronized-BatchNorm-PyTorch/sync_batchnorm . &&\
@@ -28,16 +36,11 @@ RUN cd Face_Enhancement/ &&\
   rm -f checkpoints.zip &&\
   cd ../
 
-RUN pip3 install numpy
-
-RUN pip3 install dlib
-
+# 安装Python依赖
 RUN pip3 install -r requirements.txt
 
-RUN git clone https://github.com/NVlabs/SPADE.git
+# 切换到api_server目录
+WORKDIR /app/api_server
 
-RUN cd SPADE/ && pip3 install -r requirements.txt
-
-RUN cd ..
-
-CMD ["python3", "run.py"]
+# 设置启动命令
+CMD ["python3", "app.py"]
