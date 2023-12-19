@@ -36,7 +36,7 @@ RUN cd Face_Enhancement/ &&\
   rm -f checkpoints.zip &&\
   cd ../
 
-# 安装Python依赖
+# 安装Python依赖1
 RUN pip3 install -r requirements.txt
 
 # 切换到api_server目录
