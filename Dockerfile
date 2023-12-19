@@ -4,7 +4,7 @@ FROM python:3.10-slim
 
 # RUN apt-get update && apt-get install -y python3 python3-pip
 # 准备ubuntu环境
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev -yq
+RUN apt update && apt install git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev -yq
 
 # 将代码复制到容器中
 ADD . /app
