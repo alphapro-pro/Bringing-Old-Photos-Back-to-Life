@@ -1,6 +1,6 @@
 # 如果报错需要更新版本 https://hub.docker.com/r/nvidia/cuda
-# FROM nvidia/cuda:12.3.1-base-ubuntu20.04
-FROM nvidia/cuda:11.1-base-ubuntu20.04
+FROM nvidia/cuda:12.3.1-base-ubuntu20.04
+# FROM nvidia/cuda:11.1-base-ubuntu20.04
 
 # RUN apt-get update && apt-get install -y python3 python3-pip
 # 准备ubuntu环境
