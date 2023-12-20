@@ -103,7 +103,9 @@ def match_histograms(src_image, ref_image):
     red_after_transform = cv2.LUT(src_r, red_lookup_table)
 
     # Put the image back together
-    image_after_matching = cv2.merge([blue_after_transform, green_after_transform, red_after_transform])
+    image_after_matching = cv2.merge(
+        [blue_after_transform, green_after_transform, red_after_transform]
+    )
     image_after_matching = cv2.convertScaleAbs(image_after_matching)
 
     return image_after_matching
@@ -111,7 +113,11 @@ def match_histograms(src_image, ref_image):
 
 def _standard_face_pts():
     pts = (
-        np.array([196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4], np.float32) / 256.0
+        np.array(
+            [196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4],
+            np.float32,
+        )
+        / 256.0
         - 1.0
     )
 
@@ -119,13 +125,15 @@ def _standard_face_pts():
 
 
 def _origin_face_pts():
-    pts = np.array([196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4], np.float32)
+    pts = np.array(
+        [196.0, 226.0, 316.0, 226.0, 256.0, 286.0, 220.0, 360.4, 292.0, 360.4],
+        np.float32,
+    )
 
     return np.reshape(pts, (5, 2))
 
 
 def compute_transformation_matrix(img, landmark, normalize, target_face_scale=1.0):
-
     std_pts = _standard_face_pts()  # [-1,1]
     target_pts = (std_pts * target_face_scale + 1) / 2 * 256.0
 
@@ -145,8 +153,9 @@ def compute_transformation_matrix(img, landmark, normalize, target_face_scale=1.
     return affine
 
 
-def compute_inverse_transformation_matrix(img, landmark, normalize, target_face_scale=1.0):
-
+def compute_inverse_transformation_matrix(
+    img, landmark, normalize, target_face_scale=1.0
+):
     std_pts = _standard_face_pts()  # [-1,1]
     target_pts = (std_pts * target_face_scale + 1) / 2 * 256.0
 
@@ -171,7 +180,12 @@ def show_detection(image, box, landmark):
     print(box[2] - box[0])
     plt.gca().add_patch(
         Rectangle(
-            (box[1], box[0]), box[2] - box[0], box[3] - box[1], linewidth=1, edgecolor="r", facecolor="none"
+            (box[1], box[0]),
+            box[2] - box[0],
+            box[3] - box[1],
+            linewidth=1,
+            edgecolor="r",
+            facecolor="none",
         )
     )
     plt.scatter(landmark[0][0], landmark[0][1])
@@ -188,15 +202,18 @@ def affine2theta(affine, input_w, input_h, target_w, target_h):
     theta = np.zeros([2, 3])
     theta[0, 0] = param[0, 0] * input_h / target_h
     theta[0, 1] = param[0, 1] * input_w / target_h
-    theta[0, 2] = (2 * param[0, 2] + param[0, 0] * input_h + param[0, 1] * input_w) / target_h - 1
+    theta[0, 2] = (
+        2 * param[0, 2] + param[0, 0] * input_h + param[0, 1] * input_w
+    ) / target_h - 1
     theta[1, 0] = param[1, 0] * input_h / target_w
     theta[1, 1] = param[1, 1] * input_w / target_w
-    theta[1, 2] = (2 * param[1, 2] + param[1, 0] * input_h + param[1, 1] * input_w) / target_w - 1
+    theta[1, 2] = (
+        2 * param[1, 2] + param[1, 0] * input_h + param[1, 1] * input_w
+    ) / target_w - 1
     return theta
 
 
 def blur_blending(im1, im2, mask):
-
     mask *= 255.0
 
     kernel = np.ones((10, 10), np.uint8)
@@ -215,14 +232,15 @@ def blur_blending(im1, im2, mask):
 
 
 def blur_blending_cv2(im1, im2, mask):
-
-    mask *= 255.0
+    # mask *= 255.0
+    mask = (mask * 255.0).astype(np.uint8)
 
     kernel = np.ones((9, 9), np.uint8)
     mask = cv2.erode(mask, kernel, iterations=3)
 
     mask_blur = cv2.GaussianBlur(mask, (25, 25), 0)
-    mask_blur /= 255.0
+    # mask_blur /= 255.0
+    mask_blur = (mask_blur / 255.0).astype(np.uint8)
 
     im = im1 * mask_blur + (1 - mask_blur) * im2
 
@@ -237,7 +255,6 @@ def blur_blending_cv2(im1, im2, mask):
 
 #     Image.composite(
 def Poisson_blending(im1, im2, mask):
-
     # mask=1-mask
     mask *= 255
     kernel = np.ones((10, 10), np.uint8)
@@ -250,25 +267,31 @@ def Poisson_blending(im1, im2, mask):
     width, height, channels = im1.shape
     center = (int(height / 2), int(width / 2))
     result = cv2.seamlessClone(
-        im2.astype("uint8"), im1.astype("uint8"), mask.astype("uint8"), center, cv2.MIXED_CLONE
+        im2.astype("uint8"),
+        im1.astype("uint8"),
+        mask.astype("uint8"),
+        center,
+        cv2.MIXED_CLONE,
     )
 
     return result / 255.0
 
 
 def Poisson_B(im1, im2, mask, center):
-
     mask *= 255
 
     result = cv2.seamlessClone(
-        im2.astype("uint8"), im1.astype("uint8"), mask.astype("uint8"), center, cv2.NORMAL_CLONE
+        im2.astype("uint8"),
+        im1.astype("uint8"),
+        mask.astype("uint8"),
+        center,
+        cv2.NORMAL_CLONE,
     )
 
     return result / 255
 
 
 def seamless_clone(old_face, new_face, raw_mask):
-
     height, width, _ = old_face.shape
     height = height // 2
     width = width // 2
@@ -282,9 +305,9 @@ def seamless_clone(old_face, new_face, raw_mask):
     insertion = np.rint(new_face[y_crop, x_crop] * 255.0).astype("uint8")
     insertion_mask = np.rint(raw_mask[y_crop, x_crop] * 255.0).astype("uint8")
     insertion_mask[insertion_mask != 0] = 255
-    prior = np.rint(np.pad(old_face * 255.0, ((height, height), (width, width), (0, 0)), "constant")).astype(
-        "uint8"
-    )
+    prior = np.rint(
+        np.pad(old_face * 255.0, ((height, height), (width, width), (0, 0)), "constant")
+    ).astype("uint8")
     # if np.sum(insertion_mask) == 0:
     n_mask = insertion_mask[1:-1, 1:-1, :]
     n_mask = cv2.copyMakeBorder(n_mask, 1, 1, 1, 1, cv2.BORDER_CONSTANT, 0)
@@ -315,7 +338,6 @@ def get_landmark(face_landmarks, id):
 
 
 def search(face_landmarks):
-
     x1, y1 = get_landmark(face_landmarks, 36)
     x2, y2 = get_landmark(face_landmarks, 39)
     x3, y3 = get_landmark(face_landmarks, 42)
@@ -345,7 +367,6 @@ def search(face_landmarks):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--origin_url", type=str, default="./", help="origin images")
     parser.add_argument("--replace_url", type=str, default="./", help="restored faces")
@@ -381,22 +402,28 @@ if __name__ == "__main__":
 
         blended = image
         for face_id in range(len(faces)):
-
             current_face = faces[face_id]
             face_landmarks = landmark_locator(image, current_face)
             current_fl = search(face_landmarks)
 
             forward_mask = np.ones_like(image).astype("uint8")
-            affine = compute_transformation_matrix(image, current_fl, False, target_face_scale=1.3)
-            aligned_face = warp(image, affine, output_shape=(256, 256, 3), preserve_range=True)
+            affine = compute_transformation_matrix(
+                image, current_fl, False, target_face_scale=1.3
+            )
+            aligned_face = warp(
+                image, affine, output_shape=(256, 256, 3), preserve_range=True
+            )
             forward_mask = warp(
-                forward_mask, affine, output_shape=(256, 256, 3), order=0, preserve_range=True
+                forward_mask,
+                affine,
+                output_shape=(256, 256, 3),
+                order=0,
+                preserve_range=True,
             )
 
             affine_inverse = affine.inverse
             cur_face = aligned_face
             if replace_url != "":
-
                 face_name = x[:-4] + "_" + str(face_id + 1) + ".png"
                 cur_url = os.path.join(replace_url, face_name)
                 restored_face = Image.open(cur_url).convert("RGB")
@@ -434,4 +461,3 @@ if __name__ == "__main__":
 
         if count % 1000 == 0:
             print("%d have finished ..." % (count))
-

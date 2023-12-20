@@ -12,3 +12,5 @@ opencv-python
 einops
 PySimpleGUI
 matplotlib
+flask
+numpy
