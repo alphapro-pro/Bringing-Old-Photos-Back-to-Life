@@ -5,7 +5,8 @@ FROM nvidia/cuda:12.3.1-base-ubuntu20.04
 # RUN apt-get update && apt-get install -y python3 python3-pip
 # 准备ubuntu环境
 # RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853 && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BDE6D2B9216EC7A8
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev -yq
+# RUN apt update && DEBIAN_FRONTEND=noninteractive apt install git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev -yq
+RUN apt-get update --fix-missing && DEBIAN_FRONTEND=noninteractive apt-get install -yq git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev
 
 # 将代码复制到容器中
 ADD . /app
