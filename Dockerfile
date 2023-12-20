@@ -37,7 +37,7 @@ RUN cd Face_Enhancement/ &&\
   rm -f global_checkpoints.zip &&\
   cd ../
 
-# 安装Python依赖1
+# 安装Python依赖
 # RUN pip3 install -r requirements.txt
 RUN pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 
