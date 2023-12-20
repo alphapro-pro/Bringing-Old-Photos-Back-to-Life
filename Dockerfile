@@ -38,7 +38,8 @@ RUN cd Face_Enhancement/ &&\
   cd ../
 
 # 安装Python依赖1
-RUN pip3 install -r requirements.txt
+# RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 
 # 切换到api_server目录
 WORKDIR /app/api_server

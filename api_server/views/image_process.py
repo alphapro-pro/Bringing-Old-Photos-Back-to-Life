@@ -8,7 +8,7 @@ def run_cmd(command):
 
 
 # 模型执行
-def process_image(request_id, file_name, opts):
+def process_image(opts):
     gpu1 = opts["GPU"]
 
     # resolve relative paths before changing directory

@@ -2,7 +2,7 @@ import uuid
 import os
 from flask import request, jsonify
 from functools import wraps
-from config import INPUT_FOLDER, OUTPUT_FOLDER
+from config import INPUT_FOLDER, OUTPUT_FOLDER, X_API_KEY
 
 
 def get_folder_paths():
@@ -24,7 +24,7 @@ def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         api_key = request.headers.get("X-API-KEY")
-        if api_key != "1888":
+        if api_key != X_API_KEY:
             return jsonify({"error": "Invalid API key"}), 403
         return f(*args, **kwargs)
 
