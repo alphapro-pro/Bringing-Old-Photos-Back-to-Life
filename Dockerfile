@@ -3,12 +3,6 @@ FROM nvidia/cuda:12.3.1-base-ubuntu20.04
 # 准备ubuntu环境
 # RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853 && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys BDE6D2B9216EC7A8
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install git bzip2 wget unzip python3-pip python3-dev cmake libgl1-mesa-dev python-is-python3 libgtk2.0-dev -yq
-WORKDIR /app
-# 首先只复制requirements.txt
-COPY requirements.txt /app/
-
-# 安装Python依赖
-RUN pip3 install -r requirements.txt
 
 # 准备模型
 RUN cd Face_Enhancement/models/networks/ &&\
@@ -32,6 +26,15 @@ RUN cd Face_Enhancement/ &&\
   unzip global_checkpoints.zip &&\
   rm -f global_checkpoints.zip &&\
   cd ../
+
+WORKDIR /app
+# 首先只复制requirements.txt
+COPY requirements.txt /app/
+
+# 安装Python依赖
+RUN pip3 install -r requirements.txt
+
+
 # 然后复制其余代码
 COPY . /app/
 # 切换到api_server目录
