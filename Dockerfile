@@ -11,7 +11,7 @@ WORKDIR /app
 COPY requirements.txt /app/
 
 # 安装Python依赖
-RUN pip3 install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+RUN pip3 install -r requirements.txt
 
 # 准备模型
 RUN cd Face_Enhancement/models/networks/ &&\
