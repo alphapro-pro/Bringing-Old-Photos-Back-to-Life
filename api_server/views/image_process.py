@@ -2,34 +2,33 @@ import subprocess
 import os
 import shutil
 
-from config import request_status
 
 def run_cmd(command):
     subprocess.run(command, shell=True, check=True)
 
+
 # 模型执行
-def process_image(request_id, file_name,opts):
-    gpu1 = opts['GPU']
+def process_image(request_id, file_name, opts):
+    gpu1 = opts["GPU"]
 
     # resolve relative paths before changing directory
-    opts['input_folder'] = os.path.abspath(opts['input_folder'])
-    opts['output_folder'] = os.path.abspath(opts['output_folder'])
-    if not os.path.exists(opts['output_folder']):
-        os.makedirs(opts['output_folder'])
+    opts["input_folder"] = os.path.abspath(opts["input_folder"])
+    opts["output_folder"] = os.path.abspath(opts["output_folder"])
+    if not os.path.exists(opts["output_folder"]):
+        os.makedirs(opts["output_folder"])
 
     main_environment = os.getcwd()
 
-    request_status[request_id]['status'] = 'PROCESSING'
     os.chdir("..")
     ## Stage 1: Overall Quality Improve
     print("Running Stage 1: Overall restoration")
     os.chdir("./Global")
-    stage_1_input_dir = opts['input_folder']
-    stage_1_output_dir = os.path.join(opts['output_folder'], "stage_1_restore_output")
+    stage_1_input_dir = opts["input_folder"]
+    stage_1_output_dir = os.path.join(opts["output_folder"], "stage_1_restore_output")
     if not os.path.exists(stage_1_output_dir):
         os.makedirs(stage_1_output_dir)
 
-    if not opts['with_scratch']:
+    if not opts["with_scratch"]:
         stage_1_command = (
             "python3 test.py --test_mode Full --Quality_restore --test_input "
             + stage_1_input_dir
@@ -40,7 +39,6 @@ def process_image(request_id, file_name,opts):
         )
         run_cmd(stage_1_command)
     else:
-
         mask_dir = os.path.join(stage_1_output_dir, "masks")
         new_input = os.path.join(mask_dir, "input")
         new_mask = os.path.join(mask_dir, "mask")
@@ -54,10 +52,10 @@ def process_image(request_id, file_name,opts):
             + gpu1
         )
 
-        if opts['HR']:
-            HR_suffix=" --HR"
+        if opts["HR"]:
+            HR_suffix = " --HR"
         else:
-            HR_suffix=""
+            HR_suffix = ""
 
         stage_1_command_2 = (
             "python3 test.py --Scratch_and_Quality_restore --test_input "
@@ -67,7 +65,8 @@ def process_image(request_id, file_name,opts):
             + " --outputs_dir "
             + stage_1_output_dir
             + " --gpu_ids "
-            + gpu1 + HR_suffix
+            + gpu1
+            + HR_suffix
         )
 
         run_cmd(stage_1_command_1)
@@ -75,7 +74,7 @@ def process_image(request_id, file_name,opts):
 
     ## Solve the case when there is no face in the old photo
     stage_1_results = os.path.join(stage_1_output_dir, "restored_image")
-    stage_4_output_dir = os.path.join(opts['output_folder'], "final_output")
+    stage_4_output_dir = os.path.join(opts["output_folder"], "final_output")
     if not os.path.exists(stage_4_output_dir):
         os.makedirs(stage_4_output_dir)
     for x in os.listdir(stage_1_results):
@@ -83,7 +82,6 @@ def process_image(request_id, file_name,opts):
         shutil.copy(img_dir, stage_4_output_dir)
 
     print("Finish Stage 1 ...")
-    request_status[request_id]['status'] = 'STAGE 1 COMPLETED'
     print("\n")
 
     ## Stage 2: Face Detection
@@ -91,20 +89,25 @@ def process_image(request_id, file_name,opts):
     print("Running Stage 2: Face Detection")
     os.chdir(".././Face_Detection")
     stage_2_input_dir = os.path.join(stage_1_output_dir, "restored_image")
-    stage_2_output_dir = os.path.join(opts['output_folder'], "stage_2_detection_output")
+    stage_2_output_dir = os.path.join(opts["output_folder"], "stage_2_detection_output")
     if not os.path.exists(stage_2_output_dir):
         os.makedirs(stage_2_output_dir)
-    if opts['HR']:
+    if opts["HR"]:
         stage_2_command = (
-            "python3 detect_all_dlib_HR.py --url " + stage_2_input_dir + " --save_url " + stage_2_output_dir
+            "python3 detect_all_dlib_HR.py --url "
+            + stage_2_input_dir
+            + " --save_url "
+            + stage_2_output_dir
         )
     else:
         stage_2_command = (
-            "python3 detect_all_dlib.py --url " + stage_2_input_dir + " --save_url " + stage_2_output_dir
+            "python3 detect_all_dlib.py --url "
+            + stage_2_input_dir
+            + " --save_url "
+            + stage_2_output_dir
         )
     run_cmd(stage_2_command)
     print("Finish Stage 2 ...")
-    request_status[request_id]['status'] = 'STAGE 2 COMPLETED'
     print("\n")
 
     ## Stage 3: Face Restore
@@ -112,25 +115,25 @@ def process_image(request_id, file_name,opts):
     os.chdir(".././Face_Enhancement")
     stage_3_input_mask = "./"
     stage_3_input_face = stage_2_output_dir
-    stage_3_output_dir = os.path.join(opts['output_folder'], "stage_3_face_output")
+    stage_3_output_dir = os.path.join(opts["output_folder"], "stage_3_face_output")
     if not os.path.exists(stage_3_output_dir):
         os.makedirs(stage_3_output_dir)
-    
-    if opts['HR']:
-        opts['checkpoint_name']='FaceSR_512'
+
+    if opts["HR"]:
+        opts["checkpoint_name"] = "FaceSR_512"
         stage_3_command = (
             "python3 test_face.py --old_face_folder "
             + stage_3_input_face
             + " --old_face_label_folder "
             + stage_3_input_mask
             + " --tensorboard_log --name "
-            + opts['checkpoint_name']
+            + opts["checkpoint_name"]
             + " --gpu_ids "
             + gpu1
             + " --load_size 512 --label_nc 18 --no_instance --preprocess_mode resize --batchSize 1 --results_dir "
             + stage_3_output_dir
             + " --no_parsing_map"
-        ) 
+        )
     else:
         stage_3_command = (
             "python3 test_face.py --old_face_folder "
@@ -138,7 +141,7 @@ def process_image(request_id, file_name,opts):
             + " --old_face_label_folder "
             + stage_3_input_mask
             + " --tensorboard_log --name "
-            + opts['checkpoint_name']
+            + opts["checkpoint_name"]
             + " --gpu_ids "
             + gpu1
             + " --load_size 256 --label_nc 18 --no_instance --preprocess_mode resize --batchSize 4 --results_dir "
@@ -147,7 +150,6 @@ def process_image(request_id, file_name,opts):
         )
     run_cmd(stage_3_command)
     print("Finish Stage 3 ...")
-    request_status[request_id]['status'] = 'STAGE 3 COMPLETED'
     print("\n")
 
     ## Stage 4: Warp back
@@ -155,10 +157,10 @@ def process_image(request_id, file_name,opts):
     os.chdir(".././Face_Detection")
     stage_4_input_image_dir = os.path.join(stage_1_output_dir, "restored_image")
     stage_4_input_face_dir = os.path.join(stage_3_output_dir, "each_img")
-    stage_4_output_dir = os.path.join(opts['output_folder'], "final_output")
+    stage_4_output_dir = os.path.join(opts["output_folder"], "final_output")
     if not os.path.exists(stage_4_output_dir):
         os.makedirs(stage_4_output_dir)
-    if opts['HR']:
+    if opts["HR"]:
         stage_4_command = (
             "python3 align_warp_back_multiple_dlib_HR.py --origin_url "
             + stage_4_input_image_dir
@@ -178,5 +180,4 @@ def process_image(request_id, file_name,opts):
         )
     run_cmd(stage_4_command)
     print("Finish Stage 4 ...")
-    request_status[request_id]['status'] = 'COMPLETED'
     print("\n")

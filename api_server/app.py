@@ -3,71 +3,87 @@ from flask import Flask, request, send_from_directory
 import os
 import threading
 
-from config import API_URL
+from config import API_URL, OUTPUT_FOLDER
 from views.image_process import process_image
-from config import request_status
-from utils import get_folder_path
+from utils import get_folder_paths, save_file, require_api_key
 
 app = Flask(__name__)
 
 
-@app.route("/upload", methods=["POST"])
-def upload_file():
+@app.route("/new_task", methods=["POST"])
+@require_api_key
+def new_task():
     if "file" not in request.files:
         return {"error": "No file part"}, 400
-    file = request.files["file"]
-    if file.filename == "":
+    files = request.files.getlist("file")
+
+    if not files or all(file.filename == "" for file in files):
         return {"error": "No selected file"}, 400
 
-    if file:
-        # 生成唯一的请求ID、并且准备模型的参数
-        request_id, input_folder, output_folder, file_path = get_folder_path(file)
-        # 新开线程 异步处理图片和参数
-        opts = {
-            "input_folder": input_folder,
-            "output_folder": output_folder,
-            "GPU": "0",
-            # 默认值
-            "checkpoint_name": "Setting_9_epoch_100",
-            # 默认值
-            "with_scratch": False,
-            "HR": False,
-        }
-        # 返回请求ID
-        request_status[request_id] = {"file_path": file_path, "status": "UPLOADED"}
-        thread = threading.Thread(
-            target=process_image, args=(request_id, file_path, opts)
-        )
-        thread.start()
-        return {"requestId": request_id}
+    request_id, input_folder, output_folder = get_folder_paths()
+
+    for file in files:
+        file_path = save_file(file, input_folder)
+
+    opts = {
+        "input_folder": input_folder,
+        "output_folder": output_folder,
+        "GPU": "0",
+        "checkpoint_name": "Setting_9_epoch_100",
+        "with_scratch": False,
+        "HR": False,
+    }
+
+    thread = threading.Thread(target=process_image, args=(request_id, file_path, opts))
+    thread.start()
+    return {"requestId": request_id}
 
 
 @app.route("/status/<request_id>", methods=["GET"])
+@require_api_key
 def get_status(request_id):
-    try:
-        request_id_obj = request_status[request_id]
-    except:
-        return "数据有误", 400
+    output_folder_path = os.path.join(OUTPUT_FOLDER, request_id, "final_output")
 
-    status = request_id_obj["status"]
-    response = {"requestId": request_id, "status": status}
-    # 如果处理完成，添加图片URL
-    if status == "COMPLETED":
-        response["imageUrl"] = f"{API_URL}/images/{request_id}"
+    if os.path.exists(output_folder_path) and os.path.isdir(output_folder_path):
+        image_files = [
+            f
+            for f in os.listdir(output_folder_path)
+            if os.path.isfile(os.path.join(output_folder_path, f))
+        ]
+
+        if image_files:
+            status = "COMPLETED"
+            image_urls = [
+                f"{API_URL}/images/{request_id}/final_output/{image_file}"
+                for image_file in image_files
+            ]
+            response = {
+                "requestId": request_id,
+                "status": status,
+                "imageUrls": image_urls,
+            }
+        else:
+            status = "PROCESSING"
+            response = {"requestId": request_id, "status": status}
+    else:
+        return {"error": "输出目录不存在"}, 404
 
     return response
 
 
-@app.route("/images/<request_id>", methods=["GET"])
-def get_image(request_id):
-    try:
-        request_info = request_status[request_id]
-        file_path = request_info["file_path"]
-    except KeyError:
-        return "数据有误", 400
+@app.route("/images/<request_id>/<image_name>", methods=["GET"])
+def get_image(request_id, image_name):
+    # 构建完整的文件路径
+    full_path = os.path.join(OUTPUT_FOLDER, request_id, "final_output", image_name)
+    # 发送文件
+    return send_from_directory(os.path.dirname(full_path), os.path.basename(full_path))
 
-    directory, filename = os.path.split(file_path)
-    return send_from_directory(directory, filename)
+
+# 任务重试
+@app.route("/retry", methods=["GET"])
+@require_api_key
+def retry_task():
+    pass
 
 
 if __name__ == "__main__":
