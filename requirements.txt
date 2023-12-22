@@ -13,4 +13,5 @@ einops
 PySimpleGUI
 matplotlib
 flask
+flask_cors
 numpy
