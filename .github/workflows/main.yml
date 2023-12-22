@@ -3,11 +3,11 @@ name: Push to Replicate
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
-    runs-on: mobowuhan/oldphoto
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v3
