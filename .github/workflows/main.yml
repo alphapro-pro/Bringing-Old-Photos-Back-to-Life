@@ -6,8 +6,8 @@ on:
       - master
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  do_cog_stuff:
+    runs-on: my-fancy-runner-with-more-disk-and-memory
     steps:
       - name: Check out code
         uses: actions/checkout@v3
