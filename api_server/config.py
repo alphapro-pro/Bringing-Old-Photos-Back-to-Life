@@ -8,4 +8,4 @@ X_API_KEY = "1888"
 # 打包容器
 INPUT_FOLDER = "/mnt/input"
 OUTPUT_FOLDER = "/mnt/output"
-API_URL = "http://47.253.80.183:5000"
+API_URL = "http://47.252.40.182:5000"

@@ -1,5 +1,5 @@
 from flask import Flask, request, send_from_directory
-from flask_cors import CORS
+
 import os
 import threading
 
@@ -8,7 +8,6 @@ from views.image_process import process_image
 from utils import get_folder_paths, save_file, require_api_key
 
 app = Flask(__name__)
-CORS(app)
 
 
 @app.route("/new", methods=["POST"])
